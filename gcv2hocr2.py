@@ -69,10 +69,10 @@ class GCVAnnotation:
         self.lang = lang
         self.ocr_class = ocr_class
         try:
-            self.x0 = int(float(self.page_width*(box[0]['x'] if 'x' in box[0] and box[0]['x'] > 0 else 0)))
-            self.y0 = int(float(self.page_height*(box[0]['y'] if 'y' in box[0] and box[0]['y'] > 0 else 0)))
-            self.x1 = int(float(self.page_width*(box[2]['x'] if 'x' in box[2] and box[2]['x'] > 0 else 0)))
-            self.y1 = int(float(self.page_height*(box[2]['y'] if 'y' in box[2] and box[2]['y'] > 0 else 0)))
+            self.x0 = int(float(box[0]['x'] if 'x' in box[0] and box[0]['x'] > 0 else 0))
+            self.y0 = int(float(box[0]['y'] if 'y' in box[0] and box[0]['y'] > 0 else 0))
+            self.x1 = int(float(box[2]['x'] if 'x' in box[2] and box[2]['x'] > 0 else 0))
+            self.y1 = int(float(box[2]['y'] if 'y' in box[2] and box[2]['y'] > 0 else 0))
         except ValueError as e:
             output = 'Input JSON does not have proper boundingBox values. ' \
                       'This page of the PDF either must not have been ' \
@@ -109,7 +109,7 @@ def fromResponse(resp, file_name, baseline_tolerance=2, **kwargs):
             title = file_name
         )
     else:
-        for page_id, page_json in enumerate(resp['responses'][0]['fullTextAnnotation']['pages']):
+        for page_id, page_json in enumerate(resp['fullTextAnnotation']['pages']):
           box = [{"x": 0, "y": 0}, {"x": 0, "y": 0}, {"x": 0, "y": 0}, {"x": 0, "y": 0}]
           GCVAnnotation.height = page_json.get('width')
           GCVAnnotation.width = page_json.get('height')
@@ -120,19 +120,19 @@ def fromResponse(resp, file_name, baseline_tolerance=2, **kwargs):
                     title=file_name
                     )
           for block_id, block_json in enumerate(page_json['blocks']):
-            box = block_json['boundingBox']['normalizedVertices']
+            box = block_json['boundingBox']['vertices']
             block = GCVAnnotation(ocr_class='ocr_carea',htmlid="block_%d" % block_id, box=box)
             page.content.append(block)
 
             line_id = 0
             for paragraph_id, paragraph_json in enumerate(block_json['paragraphs']):
-                box = paragraph_json['boundingBox']['normalizedVertices']
+                box = paragraph_json['boundingBox']['vertices']
                 par = GCVAnnotation(ocr_class='ocr_par',htmlid="par_"+ str(block_id) + "_" + str(paragraph_id), box=box)
                 block.content.append(par)
                 curline = GCVAnnotation(ocr_class='ocr_line', htmlid="line_"+ str(block_id) + "_" + str(paragraph_id)+"_"+ str(line_id), box=box)
                 par.content.append(curline)
                 for word_id, word_json in enumerate(paragraph_json['words']):
-                    box = word_json['boundingBox']['normalizedVertices']
+                    box = word_json['boundingBox']['vertices']
                     word_text = ''.join([
                         symbol['text'] for symbol in word_json['symbols']
                     ])
